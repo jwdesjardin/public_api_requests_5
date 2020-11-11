@@ -1,10 +1,18 @@
-(async () => {
-    const get12User = async () => {
-        const response = await fetch('https://randomuser.me/api/?results=12&nat=us');
-        const data = await response.json();
-        return data.results;
-    };
+//UTILIZE fetch to get 12 user objects from randomuser.me/api
+const get12Users = async () => {
+    const response = await fetch('https://randomuser.me/api/?results=12&nat=us');
+    const data = await response.json();
+    return data.results;
+};
 
+//MAIN CLASS - handles all ui elements
+class UI {
+    constructor(users, current){
+        this.users = users;
+        this.current = 0;
+    }
+
+    //FUNCTION - displays the search element
     createSearch = () => {
         const newHTML = `
             <form action="#" method="get">
@@ -14,7 +22,8 @@
         `;
         document.querySelector('.search-container').insertAdjacentHTML('beforeend', newHTML);
     }
-       
+           
+    //FUNCTION - displays the gallery element with dynamic information
     createGalleryItem = (user) => {
         const newElement = document.createElement('div');
         newElement.className = 'card';
@@ -24,26 +33,41 @@
             </div>
             <div class="card-info-container">
                 <h3 id="name" class="card-name cap">${user.name.first} ${user.name.last}</h3>
-                <p class="card-text">${user.email}</p>
+                 <p class="card-text">${user.email}</p>
                 <p class="card-text cap">${user.location.city}, ${user.location.state}</p>
             </div>
         `;
     
-        newElement.addEventListener('click', galleryItemHandler);
+        newElement.addEventListener('click', this.galleryItemHandler);
         document.querySelector('#gallery').insertAdjacentElement('beforeend', newElement);
     }
     
-    
-    let current = 0;
+    //EVENT HANDLER - on click of gallery cards will open up modal with correct index
+    galleryItemHandler = (e) => {
+        const card = e.currentTarget.querySelector('.card-info-container');
+        const email = card.firstElementChild.nextElementSibling.textContent;
+        const user = this.users.filter((user, index) => {
+            if (user.email === email){
+                this.current = index;
+                return user;
+            }
+        });
+        //create modal with found user
+        this.createModal(this.users, user[0]);
+    }
+        
+    //FUNCTION - creates a modal, displays more user information from user object, adds forward and backward buttons
     createModal = (users, user) => {
-        removeModal();
+    
+        this.removeModal();
+
+        //DISPLAY NEW MODAL 
         const newElement = document.createElement('div');
         newElement.className = 'modal-container';
-        console.log(user);
-        phoneRegExp = /^\((\d{3})\)-(\d{3})-(\d{4})$/;
-        bdayRegExp = /^(\d{4})-(\d{2})-(\d{2})[\w\W]*$/;
-        console.log(user.location);
-        console.log();
+    
+        const phoneRegExp = /^\((\d{3})\)-(\d{3})-(\d{4})$/;
+        const bdayRegExp = /^(\d{4})-(\d{2})-(\d{2})[\w\W]*$/;
+          
         newElement.innerHTML = `
             <div class="modal">
                 <button type="button" id="modal-close-btn" class="modal-close-btn"><strong>X</strong></button>
@@ -58,94 +82,89 @@
                     <p class="modal-text">Birthday: ${user.dob.date.replace(bdayRegExp, '$2/$3/$1')}</p>
                 </div>
             </div>
-    
-            // IMPORTANT: Below is only for exceeds tasks 
+        
+            
             <div class="modal-btn-container">
                 <button type="button" id="modal-prev" class="modal-prev btn">Prev</button>
                 <button type="button" id="modal-next" class="modal-next btn">Next</button>
             </div>
         `;
-        document.body.insertAdjacentElement('beforeend', newElement);
     
+        document.body.insertAdjacentElement('beforeend', newElement);
+        
+
+        //NAVIGATION BUTTONS
         const prevBtn = document.querySelector('#modal-prev')
         prevBtn.addEventListener('click', (e) => {
-            const firstIndex = 0;
-            console.log(current);
-            if (current != 0){
-                current--;
-                createModal(users, users[current])
+            if (this.current != 0){
+                this.current--;
+                this.createModal(users, users[this.current])
             } else{
                 prevBtn.setAttribute('disabled', true);
             }
         });
-
+    
         const nextBtn = document.querySelector('#modal-next')
         nextBtn.addEventListener('click', (e) => {
             const finalIndex = users.length - 1;
-            console.log(current,finalIndex);
-            if (current < finalIndex){
-                current++;
-                createModal(users, users[current])
+            if (this.current < finalIndex){
+                this.current++;
+                this.createModal(users, users[this.current])
             } else{
                 nextBtn.setAttribute('disabled', true);
             }
         });
-
+    
         document.querySelector('#modal-close-btn').addEventListener('click', (e) => {
-            removeModal();
+            this.removeModal();
         });
     }
-    
-
-
-
-
-     removeModal = () => {
-         const modal = document.querySelector('.modal-container');
-         if (modal){
-             modal.remove();
-         }
-     }
-    
-    
-     const galleryItemHandler = (e) => {
-         const card = e.currentTarget.querySelector('.card-info-container');
-         const email = card.firstElementChild.nextElementSibling.textContent;
-         const user = users.filter((user, index) => {
-            if (user.email === email){
-                current = index;
-                return user;
-            }
-        });
-        //create modal with found user
-        createModal(users, user[0]);
-     }
-
-
-    //GET USERS FROM API
-    // const user = await getUser();
-    const users = await get12User();
-
-    //display all users
-    users.forEach(user => {
-        createGalleryItem(user);
-    });
-
-    //create search and set event listener 
-    createSearch();
-    const searchInput = document.querySelector('#search-input');
-    searchInput.addEventListener('keyup', e => {
-        const filtered = users.filter(user => {
+        
+    //FUNCTION - removes the current modal if it exists
+    removeModal = () => {
+        const modal = document.querySelector('.modal-container');
+        if (modal){
+            modal.remove();
+        }
+    }
+        
+    //EVENT HANDLER - for search , filters current users, updates display, case insensitive
+    searchEventHandler = (e) => {
+        const filtered = this.users.filter(user => {
             const name = `${user.name.first.toLowerCase()} ${user.name.last.toLowerCase()}`;
             if (name.includes(e.target.value.toLowerCase())){
                 return user;
             }
         })
-
+    
         //display filtered users
         document.querySelector('#gallery').innerHTML = ``;
         filtered.forEach(user => {
-            createGalleryItem(user);
+            this.createGalleryItem(user);
         });
-    });
-})();
+    }
+
+}
+
+
+// MAIN APP FUNCTION
+(async function app() {
+//GET USERS FROM API
+const users = await get12Users();
+
+//create instance of ui object
+const ui = new UI(users, 0);
+
+//display all users and set event listeners
+users.forEach(user => {
+    ui.createGalleryItem(user);
+});
+
+//create search and set event listener 
+ui.createSearch();
+const searchInput = document.querySelector('#search-input');
+searchInput.addEventListener('keyup', ui.searchEventHandler);
+
+})() 
+    
+

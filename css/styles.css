@@ -17,7 +17,7 @@ body {
 body {
   font-family: 'Nunito', sans-serif;
   text-align: center;
-  background: rgba(235, 235, 235, 0.9);
+  background: rgba(243, 241, 237, 0.9);
 }
 
 header {
@@ -91,11 +91,19 @@ header h1 {
   max-width: 360px;
   margin: 10px 10px 20px;
   padding: 10px;
-  background: rgba(245, 245, 245, 0.9);
+  background: rgba(219, 238, 247, 0.9);
   border-radius: 0.25em;
   border: 1px solid rgba(50, 50, 50, 0.3);
   transition: 0.4s ease-out;
   overflow: hidden;
+}
+
+.card:nth-of-type(2n) {
+  background: rgba(213, 241, 218, 0.9);
+}
+
+.card:hover {
+  box-shadow: 2px 2px 4px #444;
 }
 
 .card-img {
