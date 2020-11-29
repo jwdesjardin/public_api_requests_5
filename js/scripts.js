@@ -9,6 +9,7 @@ const get12Users = async () => {
 class UI {
     constructor(users, current){
         this.users = users;
+        this.filtered = null;
         this.current = 0;
     }
 
@@ -46,19 +47,25 @@ class UI {
     galleryItemHandler = (e) => {
         const card = e.currentTarget.querySelector('.card-info-container');
         const email = card.firstElementChild.nextElementSibling.textContent;
-        const user = this.users.filter((user, index) => {
+        const usersList = this.filtered || this.users;
+
+        //set this.current on every click before modal is created
+        const user = usersList.filter((user, index) => {
             if (user.email === email){
                 this.current = index;
                 return user;
             }
         });
+        
         //create modal with found user
-        this.createModal(this.users, user[0]);
+        this.createModal(user[0], usersList);
     }
         
     //FUNCTION - creates a modal, displays more user information from user object, adds forward and backward buttons
-    createModal = (users, user) => {
-    
+    createModal = (user, usersList) => {
+        console.log(this.filtered);
+        
+
         this.removeModal();
 
         //DISPLAY NEW MODAL 
@@ -91,27 +98,34 @@ class UI {
         `;
     
         document.body.insertAdjacentElement('beforeend', newElement);
-        
+    
 
         //NAVIGATION BUTTONS
-        const prevBtn = document.querySelector('#modal-prev')
-        prevBtn.addEventListener('click', (e) => {
-            if (this.current != 0){
+        document.querySelector('#modal-prev').addEventListener('click', (e) => {
+            if (this.current === 1){
                 this.current--;
-                this.createModal(users, users[this.current])
-            } else{
-                prevBtn.setAttribute('disabled', true);
+                this.createModal(usersList[this.current], usersList);
+                document.querySelector('#modal-prev').style.display = 'none';
+            }
+            if (this.current > 1){
+                this.current--;
+                this.createModal(usersList[this.current], usersList);
             }
         });
     
-        const nextBtn = document.querySelector('#modal-next')
-        nextBtn.addEventListener('click', (e) => {
-            const finalIndex = users.length - 1;
+        
+        document.querySelector('#modal-next').addEventListener('click', (e) => {
+
+            const finalIndex = usersList.length - 2;
+
+            if (this.current === finalIndex){
+                this.current++;
+                this.createModal(usersList[this.current], usersList);
+                document.querySelector('#modal-next').style.display = 'none';
+            }
             if (this.current < finalIndex){
                 this.current++;
-                this.createModal(users, users[this.current])
-            } else{
-                nextBtn.setAttribute('disabled', true);
+                this.createModal(usersList[this.current], usersList);
             }
         });
     
@@ -130,7 +144,7 @@ class UI {
         
     //EVENT HANDLER - for search , filters current users, updates display, case insensitive
     searchEventHandler = (e) => {
-        const filtered = this.users.filter(user => {
+        this.filtered = this.users.filter(user => {
             const name = `${user.name.first.toLowerCase()} ${user.name.last.toLowerCase()}`;
             if (name.includes(e.target.value.toLowerCase())){
                 return user;
@@ -139,7 +153,7 @@ class UI {
     
         //display filtered users
         document.querySelector('#gallery').innerHTML = ``;
-        filtered.forEach(user => {
+        this.filtered.forEach(user => {
             this.createGalleryItem(user);
         });
     }
